@@ -460,6 +460,7 @@
       gmax *= 1.12;
       var X = function (v) { return x0 + v / fm * (x1 - x0); }, Y = function (g) { return y1 - g / gmax * (y1 - y0); };
       axes(c, x0, y0, x1, y1);
+      text(c, 'DFT phonon DOS by element (phonopy)', (x0 + x1) / 2, y0 - 12, P.ink, '600 13px Inter, sans-serif', 'center');
       var step = fm > 45 ? 10 : 5;
       for (var v = 0; v <= fm; v += step) { c.strokeStyle = P.line2; c.beginPath(); c.moveTo(X(v), y0); c.lineTo(X(v), y1); c.stroke(); text(c, v + '', X(v), y1 + 16, P.muted, MONO_S, 'center'); }
       text(c, 'phonon frequency ν (THz)', (x0 + x1) / 2, y1 + 32, P.muted, MONO_S, 'center');
@@ -472,12 +473,11 @@
           c.beginPath(); for (i = 0; i < n; i++) c.lineTo(X(i / (n - 1) * dos.fmax), Y(top[i])); for (i = n - 1; i >= 0; i--) c.lineTo(X(i / (n - 1) * dos.fmax), Y(base[i])); c.closePath();
           c.fillStyle = rgba(ELC[k % ELC.length], P.dark ? 0.45 : 0.32); c.fill();
           base = top;
-          c.fillStyle = rgba(ELC[k % ELC.length], 0.8); c.fillRect(lx + 2, ly + off + 22 + k * 16 - 7, 18, 8);
-          text(c, e, lx + 30, ly + off + 22 + k * 16, P.ink2, MONO_S);
+          c.fillStyle = rgba(ELC[k % ELC.length], 0.8); c.fillRect(lx + 2, ly + off + 4 + k * 16 - 7, 18, 8);
+          text(c, e, lx + 30, ly + off + 4 + k * 16, P.ink2, MONO_S);
         });
         c.beginPath(); for (var i2 = 0; i2 < n; i2++) { var yy = Y(dos.tot[i2]), xx = X(i2 / (n - 1) * dos.fmax); i2 ? c.lineTo(xx, yy) : c.moveTo(xx, yy); }
         c.strokeStyle = P.ink2; c.lineWidth = 1.2; c.stroke();
-        text(c, 'DFT phonon DOS by element (phonopy)', lx + 30, ly + off + 4, P.ink2, MONO_S);
       } else text(c, 'phonon DOS is available for the preset compounds', lx, ly + 4, P.faint, MONO_S);
       if (nuD > 0) {                     // Debye model with the learned Theta_D
         c.beginPath(); for (var k2 = 0; k2 <= 120; k2++) { var vv = nuD * k2 / 120; var yy2 = Y(3 * vv * vv / Math.pow(nuD, 3)); k2 ? c.lineTo(X(vv), yy2) : c.moveTo(X(vv), yy2); }
