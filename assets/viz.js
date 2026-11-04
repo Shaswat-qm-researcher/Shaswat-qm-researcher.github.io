@@ -293,7 +293,7 @@
       var px0, py0, px1, py1;
       if (narrow) { px0 = 44; px1 = W - 18; py0 = my + s + 46; py1 = H - 34; }
       else { px0 = mx + s + 58; px1 = W - 22; py0 = 34; py1 = H - 40; }
-      var e0 = 1.6, e1 = 2.6, X = function (e) { return px0 + (e - e0) / (e1 - e0) * (px1 - px0); }, Y = function (y) { return py1 - y * (py1 - py0) * 0.7; };
+      var e0 = 1.6, e1 = 2.6, X = function (e) { return px0 + (e - e0) / (e1 - e0) * (px1 - px0); }, Y = function (y) { return py1 - y * (py1 - py0) * 0.62; };
       axes(c, px0, py0, px1, py1);
       for (var e = 1.6; e <= 2.61; e += 0.2) { var xx = X(e); c.strokeStyle = P.line2; c.beginPath(); c.moveTo(xx, py0); c.lineTo(xx, py1); c.stroke(); text(c, e.toFixed(1), xx, py1 + 16, P.muted, MONO_S, 'center'); }
       text(c, 'photon energy (eV)', (px0 + px1) / 2, py1 + 31, P.muted, MONO_S, 'center');
@@ -327,15 +327,16 @@
         text(c, l1, bx + 40, by + 19, P.ink2, font); text(c, l2, bx + 40, by + 37, P.accent, font);
       })();
       // inset: blueshift vs 1/R (sits in the band above the peaks)
-      var iw = narrow ? 96 : 120, ih = Math.min(54, (py1 - py0) * 0.22), ix = px0 + 14, iy = py0 + 12;
+      var iw = narrow ? 96 : 116, ih = Math.min(46, (py1 - py0) * 0.2), ix = px0 + 34, iy = py0 + 8;
       if (px1 - px0 < 400) iw = 0;
       if (iw) {
-      c.fillStyle = rgba(P.surface, 0.92); roundRect(c, ix - 8, iy - 8, iw + 16, ih + 30, 8); c.fill(); c.strokeStyle = P.line2; c.stroke();
+      c.fillStyle = rgba(P.surface, 0.92); roundRect(c, ix - 28, iy - 6, iw + 36, ih + 26, 8); c.fill(); c.strokeStyle = P.line2; c.stroke();
       var IX = function (u) { return ix + u * iw; }, IY = function (m) { return iy + ih - m / 0.42 * ih; };
       c.strokeStyle = P.line; c.beginPath(); c.moveTo(ix, iy); c.lineTo(ix, iy + ih); c.lineTo(ix + iw, iy + ih); c.stroke();
       c.strokeStyle = P.warm; c.lineWidth = 1.5; c.beginPath(); c.moveTo(IX(1 / 15), IY(dE(15))); c.lineTo(IX(1), IY(dE(1))); c.stroke();
       c.fillStyle = P.warm; c.beginPath(); c.arc(IX(1 / R), IY(dE(R)), 3.5, 0, TAU); c.fill();
       text(c, '1/R (nm⁻¹)', ix + iw, iy + ih + 14, P.faint, MONO_S, 'right'); text(c, 'ΔE ∝ 1/R', ix + 6, iy + 9, P.faint, MONO_S);
+      c.save(); c.translate(ix - 10, iy + ih / 2); c.rotate(-Math.PI / 2); text(c, 'ΔE (meV)', 0, 0, P.faint, MONO_S, 'center'); c.restore();
       }
       rOut.textContent = R.toFixed(1) + ' nm'; oE.textContent = ENL.toFixed(3) + ' eV'; oL.textContent = Math.round(1239.84 / ENL) + ' nm'; oD.textContent = Math.round(dE(R) * 1000) + ' meV';
     };
