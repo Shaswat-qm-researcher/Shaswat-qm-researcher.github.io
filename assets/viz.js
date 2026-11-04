@@ -316,6 +316,16 @@
       text(c, 'ΔE = ' + Math.round(dE(R) * 1000) + ' meV', X(ENL) + 10, yA + 4, P.warm, MONO, 'left');
       text(c, 'local', X(EL - 0.105), Y(0.42), P.ink2, MONO_S, 'right');
       text(c, 'hydrodynamic', X(ENL + 0.105), Y(0.42), P.accent, MONO_S, 'left');
+      // legend (top right)
+      (function () {
+        var font = '500 12px Inter, sans-serif', l1 = 'Classical prediction (local)', l2 = 'Quantum corrections (hydrodynamic)';
+        c.font = font; var tw = Math.max(c.measureText(l1).width, c.measureText(l2).width), bw = tw + 46, bh = 46;
+        var bx = px1 - bw - 4, by = py0 + 8;
+        c.fillStyle = rgba(P.surface, 0.94); roundRect(c, bx, by, bw, bh, 8); c.fill(); c.strokeStyle = P.line2; c.lineWidth = 1; c.stroke();
+        c.setLineDash([5, 4]); c.strokeStyle = P.ink2; c.lineWidth = 1.5; c.beginPath(); c.moveTo(bx + 10, by + 15); c.lineTo(bx + 34, by + 15); c.stroke(); c.setLineDash([]);
+        c.strokeStyle = P.accent; c.lineWidth = 2; c.beginPath(); c.moveTo(bx + 10, by + 33); c.lineTo(bx + 34, by + 33); c.stroke();
+        text(c, l1, bx + 40, by + 19, P.ink2, font); text(c, l2, bx + 40, by + 37, P.accent, font);
+      })();
       // inset: blueshift vs 1/R (sits in the band above the peaks)
       var iw = narrow ? 96 : 120, ih = Math.min(54, (py1 - py0) * 0.22), ix = px0 + 14, iy = py0 + 12;
       if (px1 - px0 < 400) iw = 0;
