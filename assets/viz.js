@@ -464,7 +464,7 @@
       for (var v = 0; v <= fm; v += step) { c.strokeStyle = P.line2; c.beginPath(); c.moveTo(X(v), y0); c.lineTo(X(v), y1); c.stroke(); text(c, v + '', X(v), y1 + 16, P.muted, MONO_S, 'center'); }
       text(c, 'phonon frequency ν (THz)', (x0 + x1) / 2, y1 + 32, P.muted, MONO_S, 'center');
       c.save(); c.translate(x0 - 20, (y0 + y1) / 2); c.rotate(-Math.PI / 2); text(c, 'g(ν), normalised', 0, 0, P.muted, MONO_S, 'center'); c.restore();
-      var lx = x0 + 14, ly = y0 + 14;
+      var lx = x0 + 14, ly = y0 + 14, off = nuD > 0 ? 18 : 0, imag = dos && (key === 'BeB12N2' || key === 'LiB15');   // Debye entry sits first
       if (dos) {
         var n = dos.tot.length, el = Object.keys(dos.parts), base = new Float64Array(n);
         el.forEach(function (e, k) {      // stacked partial DOS
@@ -472,22 +472,27 @@
           c.beginPath(); for (i = 0; i < n; i++) c.lineTo(X(i / (n - 1) * dos.fmax), Y(top[i])); for (i = n - 1; i >= 0; i--) c.lineTo(X(i / (n - 1) * dos.fmax), Y(base[i])); c.closePath();
           c.fillStyle = rgba(ELC[k % ELC.length], P.dark ? 0.45 : 0.32); c.fill();
           base = top;
-          c.fillStyle = rgba(ELC[k % ELC.length], 0.8); c.fillRect(lx + 2, ly + 22 + k * 16 - 7, 18, 8);
-          text(c, e, lx + 30, ly + 22 + k * 16, P.ink2, MONO_S);
+          c.fillStyle = rgba(ELC[k % ELC.length], 0.8); c.fillRect(lx + 2, ly + off + 22 + k * 16 - 7, 18, 8);
+          text(c, e, lx + 30, ly + off + 22 + k * 16, P.ink2, MONO_S);
         });
         c.beginPath(); for (var i2 = 0; i2 < n; i2++) { var yy = Y(dos.tot[i2]), xx = X(i2 / (n - 1) * dos.fmax); i2 ? c.lineTo(xx, yy) : c.moveTo(xx, yy); }
         c.strokeStyle = P.ink2; c.lineWidth = 1.2; c.stroke();
-        text(c, 'DFT phonon DOS by element (phonopy)', lx + 30, ly + 4, P.ink2, MONO_S);
-        if (key === 'BeB12N2' || key === 'LiB15') text(c, 'imaginary-frequency modes present (not drawn)', x1 - 6, y0 + 12, P.warm, MONO_S, 'right');
+        text(c, 'DFT phonon DOS by element (phonopy)', lx + 30, ly + off + 4, P.ink2, MONO_S);
       } else text(c, 'phonon DOS is available for the preset compounds', lx, ly + 4, P.faint, MONO_S);
       if (nuD > 0) {                     // Debye model with the learned Theta_D
         c.beginPath(); for (var k2 = 0; k2 <= 120; k2++) { var vv = nuD * k2 / 120; var yy2 = Y(3 * vv * vv / Math.pow(nuD, 3)); k2 ? c.lineTo(X(vv), yy2) : c.moveTo(X(vv), yy2); }
         c.lineTo(X(nuD), y1); c.strokeStyle = P.accent; c.lineWidth = 2.2; c.stroke();
         c.setLineDash([3, 3]); c.lineWidth = 1; c.beginPath(); c.moveTo(X(nuD), y0); c.lineTo(X(nuD), y1); c.stroke(); c.setLineDash([]);
-        text(c, 'ν_D = ' + nuD.toFixed(1) + ' THz', X(nuD) + 6, y0 + 28, P.accent, MONO_S);
-        var lyd = dos ? ly + 22 + Object.keys(dos.parts).length * 16 + 6 : ly + 22;
+        text(c, 'ν_D = ' + nuD.toFixed(1) + ' THz', X(nuD) + 6, imag ? y0 + 60 : y0 + 28, P.accent, MONO_S);
+        var lyd = ly + 4;
         c.strokeStyle = P.accent; c.lineWidth = 2.2; c.beginPath(); c.moveTo(lx, lyd - 4); c.lineTo(lx + 22, lyd - 4); c.stroke();
         text(c, 'Debye model, ν_D from the law', lx + 30, lyd, P.accent, MONO_S);
+      }
+      if (imag) {
+        var n1 = 'imaginary-frequency modes', n2 = 'present (not drawn)'; c.font = MONO_S;
+        var nw = Math.max(c.measureText(n1).width, c.measureText(n2).width);
+        c.fillStyle = rgba(P.surface, 0.94); roundRect(c, x1 - nw - 16, y0 + 2, nw + 12, 36, 6); c.fill(); c.strokeStyle = rgba(P.warm, 0.5); c.lineWidth = 1; c.stroke();
+        text(c, n1, x1 - 10, y0 + 16, P.warm, MONO_S, 'right'); text(c, n2, x1 - 10, y0 + 31, P.warm, MONO_S, 'right');
       }
     }
     apply(5);
