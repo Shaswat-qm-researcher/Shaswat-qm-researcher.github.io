@@ -318,7 +318,7 @@
       text(c, 'hydrodynamic', X(ENL + 0.105), Y(0.42), P.accent, MONO_S, 'left');
       // legend (top right)
       (function () {
-        var font = '500 12px Inter, sans-serif', l1 = 'Classical prediction (local)', l2 = 'Quantum corrections (hydrodynamic)';
+        var font = '500 12px Inter, sans-serif', l1 = 'Classical prediction', l2 = 'Quantum corrections';
         c.font = font; var tw = Math.max(c.measureText(l1).width, c.measureText(l2).width), bw = tw + 46, bh = 46;
         var bx = px1 - bw - 4, by = py0 + 8;
         c.fillStyle = rgba(P.surface, 0.94); roundRect(c, bx, by, bw, bh, 8); c.fill(); c.strokeStyle = P.line2; c.lineWidth = 1; c.stroke();
