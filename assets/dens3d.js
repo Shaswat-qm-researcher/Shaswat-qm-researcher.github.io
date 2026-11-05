@@ -60,8 +60,12 @@ export async function init(host, ui) {
     zn: { s: sZn, d: 3.0, label: 'Zn dopant', partners: [[zn, 'Zn']], kind: 'no bond: van der Waals contact' },
     b: { s: sB, d: 3.0, label: 'B dopant', partners: [[bo, 'B']], kind: 'no bond: van der Waals contact' },
     zb: { s: sZB, d: 0, label: 'Zn–B pair', partners: [[zn, 'Zn'], [bo, 'B']], kind: 'bond: O bridging the Zn–B pair' },
-    c: { s: sC, d: 3.0, label: 'undoped C', partners: [[best, 'C']], kind: 'no bond: van der Waals contact' }
+    c: { s: sZn, d: 3.0, label: 'undoped C', partners: [[zn, 'C']], kind: 'no bond: van der Waals contact' }
   };
+  // each site shows only its own dopant; removed dopants become carbon at the same position (geometry not re-relaxed)
+  const SUB = { zb: {}, zn: { [bo]: 'C' }, b: { [zn]: 'C' }, c: { [zn]: 'C', [bo]: 'C' } };
+  let variant = 'zb';
+  const elOf = k => SUB[variant][k] || M.el[k];
 
   /* ---------------- docking state ---------------- */
   const cur = { phi: sZB.phi, z: sZB.z, r: sZB.r, d: 0, lift: 6 };
@@ -93,16 +97,16 @@ export async function init(host, ui) {
 
   const root = new THREE.Group(); scene.add(root);          // rotated so the chosen site points up (+Y)
   const sph = new THREE.SphereGeometry(1, 22, 16), cyl = new THREE.CylinderGeometry(1, 1, 1, 10, 1);
-  const RD = { H: 0.26, B: 0.42, C: 0.32, N: 0.36, O: 0.36, Zn: 0.56 };
+  const RD = { H: 0.26, B: 0.44, C: 0.32, N: 0.36, O: 0.36, Zn: 0.58 };
   const colFor = e => {
     const d = document.documentElement.getAttribute('data-theme') === 'dark' || (!document.documentElement.getAttribute('data-theme') && matchMedia('(prefers-color-scheme: dark)').matches);
-    return new THREE.Color({ C: d ? '#9aa3ae' : '#5d6571', H: '#e9ecef', N: d ? '#7eaaf0' : '#2f64b0', O: d ? '#f07a6e' : '#c8463d', B: d ? '#f2b45c' : '#d98a1f', Zn: d ? '#b9c6dd' : '#7a8aa6' }[e]);
+    return new THREE.Color({ C: d ? '#9aa3ae' : '#5d6571', H: '#e9ecef', N: d ? '#7eaaf0' : '#2f64b0', O: d ? '#ff5b4d' : '#d7301f', B: d ? '#3ee0a0' : '#13a86b', Zn: d ? '#b9c6dd' : '#6f7fa8' }[e]);
   };
   const atomMat = new THREE.MeshStandardMaterial({ roughness: 0.35, metalness: 0.05 });
   const bondMat = new THREE.MeshStandardMaterial({ color: 0x9aa0a8, roughness: 0.5 });
   function ballStick(idx, group) {
     const A = new THREE.InstancedMesh(sph, atomMat, idx.length), m = new THREE.Matrix4(), set = new Set(idx);
-    idx.forEach((k, i) => { const v = mp(P0[k]), r = RD[M.el[k]]; m.makeScale(r, r, r).setPosition(v); A.setMatrixAt(i, m); A.setColorAt(i, colFor(M.el[k])); });
+    idx.forEach((k, i) => { const v = mp(P0[k]), r = RD[elOf(k)]; m.makeScale(r, r, r).setPosition(v); A.setMatrixAt(i, m); A.setColorAt(i, colFor(elOf(k))); });
     const bl = bonds.filter(b => set.has(b[0]) && set.has(b[1]));
     const Bm = new THREE.InstancedMesh(cyl, bondMat, bl.length), up = new THREE.Vector3(0, 1, 0), q = new THREE.Quaternion();
     bl.forEach((b, i) => {
@@ -111,6 +115,11 @@ export async function init(host, ui) {
       m.compose(p.clone().add(r).multiplyScalar(0.5), q, new THREE.Vector3(0.11, L, 0.11)); Bm.setMatrixAt(i, m);
     });
     group.add(A, Bm); return A;
+  }
+  function restyle(idx, A) {      // element (size + colour) of each atom for the current variant
+    const m = new THREE.Matrix4();
+    idx.forEach((k, i) => { const v = mp(P0[k]), r = RD[elOf(k)]; m.makeScale(r, r, r).setPosition(v); A.setMatrixAt(i, m); A.setColorAt(i, colFor(elOf(k))); });
+    A.instanceMatrix.needsUpdate = true; A.instanceColor.needsUpdate = true;
   }
   const tubeG = new THREE.Group(), drugG = new THREE.Group(); root.add(tubeG, drugG);
   const tubeA = ballStick(tube, tubeG), drugA = ballStick(drug, drugG);
@@ -121,15 +130,15 @@ export async function init(host, ui) {
   const N = 76, HALF = 16, vox = 2 * HALF / N, DW = { H: 1, B: 3, C: 4, N: 5, O: 6, Zn: 2 },   /* valence electrons (Zn: 4s only) */ DSg = { H: 0.36, B: 0.6, C: 0.55, N: 0.52, O: 0.5, Zn: 0.75 };
   // inferno colour map (same as the 2D map), log scale from RHO0 to RHO1; each surface takes the colour of its iso-value
   const INF = ['#000004', '#1b0c41', '#4a0c6b', '#781c6d', '#a52c60', '#cf4446', '#ed6925', '#fb9b06', '#f7d13d', '#fcffa4'];
-  const RHO0 = 0.03, RHO1 = 2.5, tOf = r => (Math.log10(r) - Math.log10(RHO0)) / (Math.log10(RHO1) - Math.log10(RHO0));
+  const RHO0 = 0.01, RHO1 = 2.5, tOf = r => (Math.log10(r) - Math.log10(RHO0)) / (Math.log10(RHO1) - Math.log10(RHO0));
   const inf = t => { t = Math.min(1, Math.max(0, t)) * (INF.length - 1); const i = Math.min(INF.length - 2, Math.floor(t)), f = t - i; return '#' + new THREE.Color(INF[i]).lerp(new THREE.Color(INF[i + 1]), f).getHexString(); };
-  const LEVELS = [[0.1, 0.22], [0.4, 0.26], [1.4, 0.42]].map(([iso, op]) => [iso, inf(tOf(iso)), op]);
+  const LEVELS = [[0.1, 0.16], [0.4, 0.2], [1.4, 0.24]].map(([iso, op]) => [iso, inf(tOf(iso)), op]);
   const surfs = LEVELS.map(([iso, col, op]) => {
-    const mat = new THREE.MeshStandardMaterial({ color: col, emissive: col, emissiveIntensity: 0.25, transparent: true, opacity: op, roughness: 0.3, metalness: 0, side: THREE.DoubleSide, depthWrite: false });
+    const mat = new THREE.MeshStandardMaterial({ color: col, emissive: col, emissiveIntensity: 0.55, transparent: true, opacity: op, roughness: 0.3, metalness: 0, side: THREE.DoubleSide, depthWrite: false });
     const m = new MarchingCubes(N, mat, false, false, 120000); m.scale.set(HALF, HALF, HALF); m.isolation = iso; m.renderOrder = 2; root.add(m); return m;
   });
   const mc = surfs[0];
-  const tubeF = new Float32Array(N * N * N);
+  const tubeFs = {}; let tubeF = null;
   function splat(F, v, e) {        // v in model coords
     const s = DSg[e], A = DW[e] / (Math.pow(2 * Math.PI, 1.5) * s * s * s), inv = 1 / (2 * s * s), R = Math.ceil(3 * s / vox);
     const gx = Math.round(v.x / vox + N / 2), gy = Math.round(v.y / vox + N / 2), gz = Math.round(v.z / vox + N / 2);
@@ -141,7 +150,11 @@ export async function init(host, ui) {
       }
     }
   }
-  for (const k of tube) splat(tubeF, mp(P0[k]), M.el[k]);
+  function tubeField() {
+    if (!tubeFs[variant]) { const F = new Float32Array(N * N * N); for (const k of tube) splat(F, mp(P0[k]), elOf(k)); tubeFs[variant] = F; }
+    tubeF = tubeFs[variant];
+  }
+  tubeField();
   function updateField(g) {
     mc.field.set(tubeF);
     for (const k of drug) splat(mc.field, mp(placed(k, g)), M.el[k]);
@@ -171,9 +184,9 @@ export async function init(host, ui) {
   /* ---------------- theme ---------------- */
   function theme() {
     const dk = document.documentElement.getAttribute('data-theme') === 'dark' || (!document.documentElement.getAttribute('data-theme') && matchMedia('(prefers-color-scheme: dark)').matches);
-    surfs.forEach((m, i) => { m.material.opacity = LEVELS[i][2] * (dk ? 1 : 1.1); });
+    surfs.forEach((m, i) => { m.material.opacity = LEVELS[i][2] * (dk ? 1 : 1.15); });
     bondMat.color.set(document.documentElement.getAttribute('data-theme') === 'dark' || (!document.documentElement.getAttribute('data-theme') && matchMedia('(prefers-color-scheme: dark)').matches) ? 0x8a929c : 0x9aa0a8);
-    [[tube, tubeA], [drug, drugA]].forEach(([idx, A]) => { idx.forEach((k, i) => A.setColorAt(i, colFor(M.el[k]))); A.instanceColor.needsUpdate = true; });
+    restyle(tube, tubeA); restyle(drug, drugA);
     buildLegend();
     request();
   }
@@ -187,7 +200,7 @@ export async function init(host, ui) {
     if (tl) tl(t / 1000);
     root.rotation.x = -cur.phi;
     const g = rigid(); poseDrug(g);
-    const sig = [cur.phi, cur.z, cur.r, cur.d, cur.lift].map(v => v.toFixed(3)).join();
+    const sig = variant + [cur.phi, cur.z, cur.r, cur.d, cur.lift].map(v => v.toFixed(3)).join();
     if (sig !== lastField) { updateField(g); lastField = sig; }
     root.updateMatrixWorld(true);
     renderer.render(scene, camera);
@@ -197,7 +210,7 @@ export async function init(host, ui) {
     place(labDrug, top.clone().add(new THREE.Vector3(0, 1.2, 0)));
     const parts = S.partners.map(([k, nm]) => { const q = P0[k]; return nm + '···' + AEL + ' ' + Math.hypot(ap[0] - q[0], ap[1] - q[1], ap[2] - q[2]).toFixed(1) + ' Å'; });
     const docked = cur.lift < 0.05 && !tl;
-    labRead.textContent = parts.join(' · ') + (docked && host.clientWidth > 560 ? '  (' + S.kind + ')' : '');
+    labRead.textContent = parts.join(' · ') + (docked ? '\n' + S.kind : '');
     if (ui.dist) ui.dist.textContent = parts.join(' · ');
     if (tl && visible) request();
   }
@@ -205,7 +218,8 @@ export async function init(host, ui) {
 
   function go(k, first) {
     const to = SITES[k], from = { ...cur }, dphi = wrap(to.s.phi - from.phi);
-    key = k; ui.seg.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b.getAttribute('data-s') === k)));
+    key = k; variant = k; tubeField(); restyle(tube, tubeA); lastField = '';
+    ui.seg.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b.getAttribute('data-s') === k)));
     const T1 = first ? 0 : 0.7, T2 = first ? 0 : 1.5, T3 = 1.4, L0 = first ? 6 : 5; let t0 = null;
     if (first) { cur.phi = to.s.phi; cur.z = to.s.z; cur.r = to.s.r; cur.d = to.d; }
     tl = t => {
@@ -223,7 +237,7 @@ export async function init(host, ui) {
 
   /* ---------------- sizing / visibility ---------------- */
   function resize() {
-    const w = Math.max(240, host.clientWidth), h = Math.round(w < 560 ? 360 : Math.min(500, Math.max(360, w * 0.52)));
+    const w = Math.max(240, host.clientWidth), h = Math.round(w < 560 ? 400 : Math.min(560, Math.max(400, w * 0.6)));
     renderer.setSize(w, h, true); camera.aspect = w / h;
     camera.position.copy(controls.target).add(new THREE.Vector3(4, 10, 46).setLength(w < 560 ? 66 : 54)); camera.lookAt(controls.target); camera.updateProjectionMatrix(); request();
   }

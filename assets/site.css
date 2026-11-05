@@ -566,3 +566,8 @@ footer { align-items: center; }
 .d3leg .cbar em::before { content: ""; position: absolute; left: 50%; top: -9px; height: 13px; border-left: 1.5px solid var(--ink); }
 .d3leg { left: auto; bottom: auto; right: 12px; top: 12px; }
 @media (max-width: 560px) { .d3leg { right: auto; top: auto; left: 8px; bottom: 8px; transform: scale(.9); transform-origin: left bottom; } }
+
+.d3lab.read { white-space: pre-line; line-height: 1.45; }
+.d3leg { top: auto; bottom: 12px; right: 12px; }
+.d3leg { top: 12px; bottom: auto; right: 12px; }
+@media (max-width: 560px) { .d3leg { top: auto; bottom: 8px; left: 8px; right: auto; } }
