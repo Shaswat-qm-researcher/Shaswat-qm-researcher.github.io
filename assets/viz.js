@@ -710,7 +710,7 @@
   var RDRAW = { H: 0.26, B: 0.42, C: 0.34, N: 0.36, O: 0.36, Zn: 0.56 };
   function elCol(e) {
     var d = P.dark;
-    return { C: d ? '#a3abb6' : '#5d6571', H: d ? '#eceff2' : '#e1e4e8', N: d ? '#7eaaf0' : '#2f64b0', O: d ? '#f07a6e' : '#c8463d', B: d ? '#f2b45c' : '#d98a1f', Zn: d ? '#b9c6dd' : '#6b7b97' }[e];
+    return { C: d ? '#a3abb6' : '#5d6571', H: d ? '#eceff2' : '#e1e4e8', N: d ? '#7eaaf0' : '#2f64b0', O: d ? '#ff5b4d' : '#d7301f', B: d ? '#3ee0a0' : '#13a86b', Zn: d ? '#b9c6dd' : '#6f7fa8' }[e];   // same palette as the 3D density view
   }
   function Mol(cv) {
     var M = window.MOL_GYNT; if (!M) return null;
