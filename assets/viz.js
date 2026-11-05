@@ -256,7 +256,7 @@
     self.draw = function (tt) {
       if (!map) buildMap();
       if (tt === undefined) tt = performance.now() / 1000 - tStart;
-      var f = fit(cv, function (w) { return w < 560 ? w * 1.5 : clamp(w * 0.44, 300, 410); }), c = f.c, W = f.w, H = f.h;
+      var f = fit(cv, function (w) { return w < 560 ? w * 1.5 + 34 : clamp(w * 0.44, 300, 410); }), c = f.c, W = f.w, H = f.h;
       c.clearRect(0, 0, W, H);
       var narrow = W < 560, s = narrow ? Math.min(W - 40, H * 0.46) : Math.min(H - 56, W * 0.38);
       var mx = narrow ? (W - s) / 2 : 22, my = narrow ? 14 : (H - s) / 2 - 6;
@@ -291,14 +291,14 @@
       text(c, '|E/E₀|² ≤ ' + Math.round(map.peak), mx + s - 12, my + 20, P.ink2, MONO_S, 'right');
       // --- spectrum
       var px0, py0, px1, py1;
-      if (narrow) { px0 = 44; px1 = W - 18; py0 = my + s + 46; py1 = H - 34; }
+      if (narrow) { px0 = 44; px1 = W - 18; py0 = my + s + 80; py1 = H - 34; }
       else { px0 = mx + s + 58; px1 = W - 22; py0 = 34; py1 = H - 40; }
       var e0 = 1.6, e1 = 2.6, X = function (e) { return px0 + (e - e0) / (e1 - e0) * (px1 - px0); }, Y = function (y) { return py1 - y * (py1 - py0) * 0.62; };
       axes(c, px0, py0, px1, py1);
       for (var e = 1.6; e <= 2.61; e += 0.2) { var xx = X(e); c.strokeStyle = P.line2; c.beginPath(); c.moveTo(xx, py0); c.lineTo(xx, py1); c.stroke(); text(c, e.toFixed(1), xx, py1 + 16, P.muted, MONO_S, 'center'); }
       text(c, 'photon energy (eV)', (px0 + px1) / 2, py1 + 31, P.muted, MONO_S, 'center');
-      [750, 650, 550, 500].forEach(function (lam) { var xx = X(1239.84 / lam); c.strokeStyle = P.line; c.beginPath(); c.moveTo(xx, py0); c.lineTo(xx, py0 - 4); c.stroke(); text(c, lam + '', xx, py0 - 8, P.faint, MONO_S, 'center'); });
-      text(c, 'λ (nm)', px1, py0 - 8, P.faint, MONO_S, 'right');
+      (narrow ? [750, 650, 550] : [750, 650, 550, 500]).forEach(function (lam) { var xx = X(1239.84 / lam); c.strokeStyle = P.line; c.beginPath(); c.moveTo(xx, py0); c.lineTo(xx, py0 - 4); c.stroke(); text(c, lam + '', xx, py0 - 8, P.faint, MONO_S, 'center'); });
+      if (narrow) text(c, 'λ (nm)', px0 - 6, py0 - 8, P.faint, MONO_S, 'right'); else text(c, 'λ (nm)', px1, py0 - 8, P.faint, MONO_S, 'right');
       c.save(); c.translate(px0 - 14, (py0 + py1) / 2); c.rotate(-Math.PI / 2); text(c, 'extinction (norm.)', 0, 0, P.muted, MONO_S, 'center'); c.restore();
       var ENL = EL + dE(R), lor = function (E, E0) { var z = (E - E0) / (G / 2); return 1 / (1 + z * z); };
       // filled hydrodynamic
@@ -320,6 +320,16 @@
       (function () {
         var font = '500 12px Inter, sans-serif', l1 = 'Classical prediction', l2 = 'Quantum corrections';
         c.font = font; var tw = Math.max(c.measureText(l1).width, c.measureText(l2).width), bw = tw + 46, bh = 46;
+        if (narrow) {
+          var f2 = '500 11.5px Inter, sans-serif'; c.font = f2;
+          var w1 = c.measureText(l1).width, w2 = c.measureText(l2).width, tot = 24 + 6 + w1 + 16 + 24 + 6 + w2, sx = Math.max(8, (W - tot) / 2), ly = my + s + 34;
+          c.setLineDash([5, 4]); c.strokeStyle = P.ink2; c.lineWidth = 1.5; c.beginPath(); c.moveTo(sx, ly - 4); c.lineTo(sx + 24, ly - 4); c.stroke(); c.setLineDash([]);
+          text(c, l1, sx + 30, ly, P.ink2, f2);
+          var sx2 = sx + 30 + w1 + 16;
+          c.strokeStyle = P.accent; c.lineWidth = 2; c.beginPath(); c.moveTo(sx2, ly - 4); c.lineTo(sx2 + 24, ly - 4); c.stroke();
+          text(c, l2, sx2 + 30, ly, P.accent, f2);
+          return;
+        }
         var bx = px1 - bw - 4, by = py0 + 8;
         c.fillStyle = rgba(P.surface, 0.94); roundRect(c, bx, by, bw, bh, 8); c.fill(); c.strokeStyle = P.line2; c.lineWidth = 1; c.stroke();
         c.setLineDash([5, 4]); c.strokeStyle = P.ink2; c.lineWidth = 1.5; c.beginPath(); c.moveTo(bx + 10, by + 15); c.lineTo(bx + 34, by + 15); c.stroke(); c.setLineDash([]);
@@ -1056,14 +1066,172 @@
     return self;
   }
 
+  /* ================================================================== ELECTRON DENSITY
+     Illustrative electron-density view of the same QuantumATK geometry (window.MOL_GYNT).
+     Density = superposition of free-atom (promolecular) Gaussians, weighted by valence
+     electrons and projected along the viewing direction; it is NOT a self-consistent DFT
+     density. The nanotube is fixed; Ribavirin (a separate 29-atom molecule) is moved as a
+     rigid body around the tube axis to the chosen site and docked with a typical bond
+     length. The view always shows the chosen site in profile, at the top of the tube. */
+  var DW = { H: 1, B: 3, C: 4, N: 5, O: 6, Zn: 12 };            // valence-electron weights
+  var DS = { H: 0.36, B: 0.6, C: 0.55, N: 0.52, O: 0.5, Zn: 0.75 }; // Gaussian widths (A)
+  var INFERNO = ['#000004', '#1b0c41', '#4a0c6b', '#781c6d', '#a52c60', '#cf4446', '#ed6925', '#fb9b06', '#f7d13d', '#fcffa4'];
+  function inferno(u) {
+    u = clamp(u, 0, 1) * (INFERNO.length - 1); var i = Math.min(INFERNO.length - 2, Math.floor(u)), f = u - i, a = rgb(INFERNO[i]), b = rgb(INFERNO[i + 1]);
+    return [a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f, a[2] + (b[2] - a[2]) * f];
+  }
+  function Dens(cv) {
+    var M = window.MOL_GYNT; if (!M) return null;
+    var root = cv.closest('.viz'), segS = root.querySelector('[data-site]'), rerun = root.querySelector('[data-rerun]'), out = root.querySelector('[data-dist]');
+    var self = { el: cv, visible: false }, n = M.el.length, i, j;
+    // --- split the structure into nanotube and drug (connected components)
+    var RC = { H: 0.31, B: 0.84, C: 0.76, N: 0.71, O: 0.66, Zn: 1.22 }, adj = [];
+    for (i = 0; i < n; i++) adj.push([]);
+    for (i = 0; i < n; i++) for (j = i + 1; j < n; j++) {
+      var a = M.xyz[i], b = M.xyz[j], dd = Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]);
+      if (dd > 0.4 && dd < 1.18 * (RC[M.el[i]] + RC[M.el[j]])) { adj[i].push(j); adj[j].push(i); }
+    }
+    var comp = new Int32Array(n).fill(-1), nc = 0;
+    for (i = 0; i < n; i++) if (comp[i] < 0) { var st = [i]; comp[i] = nc; while (st.length) { var k = st.pop(); adj[k].forEach(function (m) { if (comp[m] < 0) { comp[m] = nc; st.push(m); } }); } nc++; }
+    var drugC = comp[M.el.indexOf('O')], drug = [], tube = [];
+    for (i = 0; i < n; i++) (comp[i] === drugC ? drug : tube).push(i);
+    var cx = 0, cy = 0, cn = 0; tube.forEach(function (k) { if (M.el[k] === 'C') { cx += M.xyz[k][0]; cy += M.xyz[k][1]; cn++; } }); cx /= cn; cy /= cn;
+    var P0 = M.xyz.map(function (p) { return [p[0] - cx, p[1] - cy, p[2]]; });
+    function site(k) { var p = P0[k]; return { k: k, r: Math.hypot(p[0], p[1]), phi: Math.atan2(p[1], p[0]), z: p[2] }; }
+    var zn = M.el.indexOf('Zn'), bo = M.el.indexOf('B'), sZn = site(zn), sB = site(bo);
+    // undoped carbon on the far side of the tube, at the same height as the Zn site
+    var best = -1, bs = 1e9; tube.forEach(function (k) {
+      if (M.el[k] !== 'C') return; var s = site(k), dphi = Math.abs(Math.atan2(Math.sin(s.phi - sZn.phi - Math.PI), Math.cos(s.phi - sZn.phi - Math.PI)));
+      var sc = dphi * 4 + Math.abs(s.z - sZn.z) * 0.3 - s.r * 0.2; if (sc < bs) { bs = sc; best = k; }
+    });
+    var sC = site(best);
+    // anchor: the drug atom that faces the Zn site in the input geometry (an O)
+    var anc = drug[0], ad = 1e9; drug.forEach(function (k) { var p = P0[k], q = P0[zn], d = Math.hypot(p[0] - q[0], p[1] - q[1], p[2] - q[2]); if (d < ad) { ad = d; anc = k; } });
+    var AEL = M.el[anc];
+    var SITES = {
+      zn: { s: sZn, d: AEL === 'N' ? 2.1 : 2.0, name: 'Zn', label: 'Zn dopant', kind: 'bond' },
+      b: { s: sB, d: AEL === 'N' ? 1.6 : 1.6, name: 'B', label: 'B dopant', kind: 'bond' },
+      c: { s: sC, d: 3.0, name: 'C', label: 'undoped C', kind: 'vdW' }
+    };
+    // --- animation state: phi, z, r of the target site, docking distance and lift
+    var cur = { phi: sZn.phi, z: sZn.z, r: sZn.r, d: SITES.zn.d, lift: 6 }, key = 'zn', tl = null, scale = null;
+    function wrap(a) { return Math.atan2(Math.sin(a), Math.cos(a)); }
+    function ease(u) { return u < 0.5 ? 4 * u * u * u : 1 - Math.pow(-2 * u + 2, 3) / 2; }
+    function go(k, first) {
+      var to = SITES[k], from = { phi: cur.phi, z: cur.z, r: cur.r, d: cur.d, lift: cur.lift }, t0 = null;
+      var dphi = wrap(to.s.phi - from.phi);
+      key = k; segS.querySelectorAll('button').forEach(function (b) { b.setAttribute('aria-pressed', String(b.getAttribute('data-s') === k)); });
+      var T1 = first ? 0 : 0.7, T2 = first ? 0 : 1.5, T3 = 1.3, lift0 = first ? 6 : 5;
+      tl = function (t) {
+        if (t0 === null) t0 = t; var u = t - t0;
+        if (u < T1) { cur.lift = from.lift + (lift0 - from.lift) * ease(u / T1); }
+        else if (u < T1 + T2) { var v = ease((u - T1) / T2); cur.lift = lift0; cur.phi = from.phi + dphi * v; cur.z = from.z + (to.s.z - from.z) * v; cur.r = from.r + (to.s.r - from.r) * v; cur.d = from.d + (to.d - from.d) * v; }
+        else if (u < T1 + T2 + T3) { cur.phi = to.s.phi; cur.z = to.s.z; cur.r = to.s.r; cur.d = to.d; cur.lift = lift0 * (1 - ease((u - T1 - T2) / T3)); }
+        else { cur.lift = 0; tl = null; }
+      };
+      if (RM) { cur.phi = to.s.phi; cur.z = to.s.z; cur.r = to.s.r; cur.d = to.d; cur.lift = 0; tl = null; }
+      kick();
+    }
+    // drug placed rigidly: rotate about the tube axis, shift along it, then dock the anchor
+    function placeDrug() {
+      var dphi = cur.phi - sZn.phi, c = Math.cos(dphi), s = Math.sin(dphi), dz = cur.z - sZn.z, out = {};
+      var ex = Math.cos(cur.phi), ey = Math.sin(cur.phi);
+      var tgt = [(cur.r + cur.d + cur.lift) * ex, (cur.r + cur.d + cur.lift) * ey, cur.z];
+      var a = P0[anc], ar = [a[0] * c - a[1] * s, a[0] * s + a[1] * c, a[2] + dz], T = [tgt[0] - ar[0], tgt[1] - ar[1], tgt[2] - ar[2]];
+      drug.forEach(function (k) { var p = P0[k]; out[k] = [p[0] * c - p[1] * s + T[0], p[0] * s + p[1] * c + T[1], p[2] + dz + T[2]]; });
+      return out;
+    }
+    // --- density on a grid in the view plane (u = along tube, v = toward the site)
+    var U0 = -12, U1 = 12.5, V0 = -6.5, V1 = 16, HG = 0.1, NX = Math.round((U1 - U0) / HG), NY = Math.round((V1 - V0) / HG);
+    var rho = new Float32Array(NX * NY), img = null, off = document.createElement('canvas'); off.width = NX; off.height = NY;
+    var KR = {}; Object.keys(DS).forEach(function (e) { KR[e] = Math.ceil(3 * DS[e] / HG); });
+    function field(D) {
+      rho.fill(0);
+      var ex = Math.cos(cur.phi), ey = Math.sin(cur.phi);
+      for (var k = 0; k < n; k++) {
+        var p = D[k] || P0[k], u = p[2], v = p[0] * ex + p[1] * ey, e = M.el[k], sg = DS[e], A = DW[e] / (TAU * sg * sg), inv = 1 / (2 * sg * sg), R = KR[e];
+        var gi = Math.round((u - U0) / HG), gj = Math.round((V1 - v) / HG);
+        for (var jj = Math.max(0, gj - R); jj <= Math.min(NY - 1, gj + R); jj++) {
+          var dv = (V1 - jj * HG) - v, dv2 = dv * dv, row = jj * NX;
+          for (var ii = Math.max(0, gi - R); ii <= Math.min(NX - 1, gi + R); ii++) { var du = (U0 + ii * HG) - u; rho[row + ii] += A * Math.exp(-(du * du + dv2) * inv); }
+        }
+      }
+    }
+    var LO = null, HI = null;
+    function paint() {
+      if (!img) img = new ImageData(NX, NY);
+      if (LO === null) { var mx = 0; for (var q = 0; q < rho.length; q++) if (rho[q] > mx) mx = rho[q]; HI = Math.log10(mx) + 0.05; LO = HI - 2.4; }
+      var d = img.data, lv = new Int8Array(NX * NY), q2;
+      for (q2 = 0; q2 < rho.length; q2++) { var t = rho[q2] > 0 ? Math.pow(clamp((Math.log10(rho[q2]) - LO) / (HI - LO), 0, 1), 1.35) : 0; lv[q2] = t <= 0 ? -1 : Math.min(9, Math.floor(t * 10)); var col = inferno(t); d[q2 * 4] = col[0]; d[q2 * 4 + 1] = col[1]; d[q2 * 4 + 2] = col[2]; d[q2 * 4 + 3] = 255; }
+      for (var y = 0; y < NY - 1; y++) for (var x = 0; x < NX - 1; x++) {     // iso-density contour lines
+        var o = y * NX + x; if (lv[o] >= 2 && (lv[o] !== lv[o + 1] || lv[o] !== lv[o + NX])) { d[o * 4] = d[o * 4] * 0.55 + 115; d[o * 4 + 1] = d[o * 4 + 1] * 0.55 + 115; d[o * 4 + 2] = d[o * 4 + 2] * 0.55 + 115; }
+      }
+      off.getContext('2d').putImageData(img, 0, 0);
+    }
+    self.animating = function () { return !!tl; };
+    self.tick = function (t) { if (tl) tl(t); self.draw(); };
+    self.draw = function () {
+      var f = fit(cv, function (w) { return w < 560 ? 330 : clamp(w * 0.5, 340, 470); }), c = f.c, W = f.w, H = f.h;
+      c.clearRect(0, 0, W, H);
+      var D = placeDrug(); field(D); paint();
+      var sc = Math.min((W - 24) / (U1 - U0), (H - 24) / (V1 - V0)), pw = (U1 - U0) * sc, ph = (V1 - V0) * sc, ox = (W - pw) / 2, oy = (H - ph) / 2;
+      c.save(); roundRect(c, ox, oy, pw, ph, 10); c.clip(); c.imageSmoothingEnabled = true; c.drawImage(off, ox, oy, pw, ph);
+      var ex = Math.cos(cur.phi), ey = Math.sin(cur.phi), SX = function (p) { return ox + (p[2] - U0) * sc; }, SY = function (p) { return oy + (V1 - (p[0] * ex + p[1] * ey)) * sc; };
+      // site and anchor markers with the separation
+      var S = SITES[key], sp = P0[S.s.k], ap = D[anc], dist = Math.hypot(ap[0] - sp[0], ap[1] - sp[1], ap[2] - sp[2]);
+      c.setLineDash([4, 4]); c.strokeStyle = 'rgba(255,255,255,0.75)'; c.lineWidth = 1.3; c.beginPath(); c.moveTo(SX(sp), SY(sp)); c.lineTo(SX(ap), SY(ap)); c.stroke(); c.setLineDash([]);
+      [[sp, '#7fd3ff'], [ap, '#ff8a7a']].forEach(function (m) { c.beginPath(); c.arc(SX(m[0]), SY(m[0]), 4.2, 0, TAU); c.fillStyle = m[1]; c.fill(); c.strokeStyle = '#000'; c.lineWidth = 1; c.stroke(); });
+      var lab = function (s, x, y, col, al) { c.font = '600 12px Inter, sans-serif'; var tw = c.measureText(s).width, x0 = al === 'right' ? x - tw : al === 'center' ? x - tw / 2 : x; c.fillStyle = 'rgba(0,0,0,0.55)'; roundRect(c, x0 - 5, y - 13, tw + 10, 18, 5); c.fill(); text(c, s, x, y, col, '600 12px Inter, sans-serif', al || 'left'); };
+      lab(S.label, SX(sp) + 10, SY(sp) + 22, '#7fd3ff');
+      var dtop = 1e9, dxm = 0; drug.forEach(function (k) { dtop = Math.min(dtop, SY(D[k])); dxm += SX(D[k]); }); dxm /= drug.length;
+      lab('Ribavirin', dxm, Math.max(oy + 18, dtop - 10), '#ffb4a8', 'center');
+      c.restore();
+      // colour bar and readout
+      var nar = W < 560, bw = nar ? Math.min(130, pw * 0.42) : Math.min(160, pw * 0.3), bx = ox + pw - bw - 12, by = nar ? oy + ph - 52 : oy + 12;
+      c.fillStyle = 'rgba(0,0,0,0.6)'; roundRect(c, bx - 8, by - 6, bw + 16, 50, 6); c.fill();
+      text(c, 'electron density (log)', bx + bw / 2, by + 7, '#e8e8e8', MONO_S, 'center');
+      var gr = c.createLinearGradient(bx, 0, bx + bw, 0); INFERNO.forEach(function (h, k) { gr.addColorStop(k / (INFERNO.length - 1), h); }); c.fillStyle = gr; c.fillRect(bx, by + 13, bw, 8);
+      text(c, 'low', bx, by + 36, '#d8d8d8', MONO_S); text(c, 'high', bx + bw, by + 36, '#d8d8d8', MONO_S, 'right');
+      var docked = cur.lift < 0.05 && !tl;
+      var msg = S.name + '···' + AEL + ' ' + dist.toFixed(1) + ' Å' + (docked && !nar ? (S.kind === 'bond' ? '  (typical bond length)' : '  (van der Waals contact)') : '');
+      c.fillStyle = 'rgba(0,0,0,0.55)'; c.font = MONO; var mw = c.measureText(msg).width; roundRect(c, ox + 10, oy + 8, mw + 16, 22, 6); c.fill();
+      text(c, msg, ox + 18, oy + 23, '#ffffff', MONO);
+      if (out) out.textContent = S.name + '···' + AEL + ' ' + dist.toFixed(1) + ' Å';
+    };
+    segS.querySelectorAll('button').forEach(function (b) { b.addEventListener('click', function () { go(b.getAttribute('data-s')); }); });
+    rerun.addEventListener('click', function () { cur.lift = 6; go(key, true); });
+    // first appearance: dock at the Zn site
+    var started = false;
+    var io = 'IntersectionObserver' in window ? new IntersectionObserver(function (es) { es.forEach(function (e) { if (e.isIntersecting && !started) { started = true; go('zn', true); } }); }) : null;
+    if (io) io.observe(cv); else go('zn', true);
+    register(self);
+    return self;
+  }
+
+  /* view switch for the nanotube card: 3D model <-> electron density */
+  function molViews() {
+    var seg = document.querySelector('[data-mview]'); if (!seg) return;
+    var root = seg.closest('.viz');
+    seg.querySelectorAll('button').forEach(function (b) {
+      b.addEventListener('click', function () {
+        var v = b.getAttribute('data-v');
+        seg.querySelectorAll('button').forEach(function (q) { q.setAttribute('aria-pressed', String(q === b)); });
+        root.querySelectorAll('[data-mv]').forEach(function (el) { el.hidden = el.getAttribute('data-mv') !== v; });
+        widgets.forEach(function (w) { if (w.el.id === 'viz-mol' || w.el.id === 'viz-dens') { w.resize && w.resize(); w.draw(); } });
+        kick();
+      });
+    });
+  }
+
   /* ------------------------------------------------------------ boot */
   function boot() {
     readP();
-    var make = [['hero-viz', Hero], ['viz-plasmon', Plasmon], ['viz-debye', Debye], ['viz-pca', PCA], ['viz-sfe', SFE], ['viz-tise', TISE], ['viz-mol', Mol]];
+    var make = [['hero-viz', Hero], ['viz-plasmon', Plasmon], ['viz-debye', Debye], ['viz-pca', PCA], ['viz-sfe', SFE], ['viz-tise', TISE], ['viz-mol', Mol], ['viz-dens', Dens]];
     make.forEach(function (m) {
       var el = document.getElementById(m[0]); if (!el) return;
       try { var w = m[1](el); if (w) w.draw(); } catch (err) { if (window.console) console.error(m[0], err); }
     });
+    molViews();
     kick();
   }
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(boot, boot); else window.addEventListener('load', boot);

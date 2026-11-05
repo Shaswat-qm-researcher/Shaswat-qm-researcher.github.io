@@ -537,3 +537,6 @@ footer { align-items: center; }
 }
 .viz .ctl[hidden] { display: none; }
 .rail .rail-toggle { margin: -12px 0 -4px 52px; }
+
+.viz .ctl-top { border-top: 0; border-bottom: 1px solid var(--line-2); }
+.viz [hidden] { display: none !important; }
