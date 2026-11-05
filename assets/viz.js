@@ -470,7 +470,7 @@
       gmax *= 1.12;
       var X = function (v) { return x0 + v / fm * (x1 - x0); }, Y = function (g) { return y1 - g / gmax * (y1 - y0); };
       axes(c, x0, y0, x1, y1);
-      text(c, 'DFT phonon DOS by element (phonopy)', (x0 + x1) / 2, y0 - 12, P.ink, '600 13px Inter, sans-serif', 'center');
+      text(c, dos ? 'DFT phonon DOS by element (phonopy)' : 'Debye-model phonon DOS', (x0 + x1) / 2, y0 - 12, P.ink, '600 13px Inter, sans-serif', 'center');
       var step = fm > 45 ? 10 : 5;
       for (var v = 0; v <= fm; v += step) { c.strokeStyle = P.line2; c.beginPath(); c.moveTo(X(v), y0); c.lineTo(X(v), y1); c.stroke(); text(c, v + '', X(v), y1 + 16, P.muted, MONO_S, 'center'); }
       text(c, 'phonon frequency ν (THz)', (x0 + x1) / 2, y1 + 32, P.muted, MONO_S, 'center');
@@ -488,7 +488,7 @@
         });
         c.beginPath(); for (var i2 = 0; i2 < n; i2++) { var yy = Y(dos.tot[i2]), xx = X(i2 / (n - 1) * dos.fmax); i2 ? c.lineTo(xx, yy) : c.moveTo(xx, yy); }
         c.strokeStyle = P.ink2; c.lineWidth = 1.2; c.stroke();
-      } else text(c, 'phonon DOS is available for the preset compounds', lx, ly + 4, P.faint, MONO_S);
+      } else text(c, 'DFT phonon DOS is shown for the preset compounds', x0 + (x1 - x0) * 0.32, y0 + (y1 - y0) * 0.38, P.faint, MONO_S, 'center');
       if (nuD > 0) {                     // Debye model with the learned Theta_D
         c.beginPath(); for (var k2 = 0; k2 <= 120; k2++) { var vv = nuD * k2 / 120; var yy2 = Y(3 * vv * vv / Math.pow(nuD, 3)); k2 ? c.lineTo(X(vv), yy2) : c.moveTo(X(vv), yy2); }
         c.lineTo(X(nuD), y1); c.strokeStyle = P.accent; c.lineWidth = 2.2; c.stroke();
