@@ -540,3 +540,13 @@ footer { align-items: center; }
 
 .viz .ctl-top { border-top: 0; border-bottom: 1px solid var(--line-2); }
 .viz [hidden] { display: none !important; }
+
+/* 3D density view */
+.d3host { position: relative; min-height: 360px; overflow: hidden; cursor: grab; }
+.d3host:active { cursor: grabbing; }
+.d3host.loading::after { content: "loading 3D view…"; position: absolute; inset: 0; display: grid; place-items: center; font: 500 12px var(--mono); color: var(--muted); }
+.d3lab { position: absolute; left: 0; top: 0; pointer-events: none; white-space: nowrap; font: 600 12px var(--sans); padding: 2px 7px; border-radius: 5px;
+  background: color-mix(in srgb, var(--surface) 88%, transparent); border: 1px solid var(--line-2); margin: -10px 0 0 -40px; }
+.d3lab.site { color: var(--accent); }
+.d3lab.drug { color: var(--warm); }
+.d3lab.read { transform: none !important; left: 12px; top: 12px; margin: 0; font: 500 12px var(--mono); color: var(--ink); opacity: 1 !important; }

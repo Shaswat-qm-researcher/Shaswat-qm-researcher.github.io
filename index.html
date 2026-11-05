@@ -18,7 +18,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400;1,6..72,500&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/site.css?v=46">
+<link rel="stylesheet" href="assets/site.css?v=49">
 <script>
   /* theme before paint: ?theme=dark|light, else saved choice, else system */
   (function () {
@@ -32,7 +32,7 @@
   /* Freshness check: GitHub Pages lets browsers reuse a page for 10 minutes. version.txt is
      fetched uncached; if it differs from this page's build, reload once from the network. */
   (function () {
-    var BUILD = '2026-11-05-12';
+    var BUILD = '2026-11-05-14';
     try {
       fetch('version.txt?t=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.ok ? r.text() : ''; }).then(function (v) {
         v = (v || '').trim(); if (!v || v === BUILD) return;
@@ -391,19 +391,20 @@
         <div class="seg" role="group" aria-label="View" data-mview><button type="button" data-v="3d" aria-pressed="true">3D model</button><button type="button" data-v="dens" aria-pressed="false">Electron density</button></div>
       </div>
       <canvas id="viz-mol" data-mv="3d" aria-label="Interactive 3D model: Ribavirin next to a boron and zinc co-doped gamma-graphyne nanotube. Drag to rotate."></canvas>
-      <canvas id="viz-dens" data-mv="dens" hidden aria-label="Illustrative electron-density map: choose a dopant site and Ribavirin moves to it and docks on the nanotube."></canvas>
+      <div id="viz-dens3d" class="d3host" data-mv="dens" hidden aria-label="3D model with electron-density surface: choose a dopant site and Ribavirin moves to it and docks on the nanotube. Drag to rotate."></div>
+      <canvas id="viz-dens" data-mv="dens2d" hidden aria-label="Illustrative electron-density map (2D fallback)."></canvas>
       <div class="ctl" data-legend data-mv="3d">
         <button class="mini" type="button" data-spin aria-pressed="true">Pause rotation</button>
         <span class="sp"></span>
       </div>
       <div class="ctl" data-mv="dens" hidden>
         <span>Binding site</span>
-        <div class="seg" role="group" aria-label="Binding site" data-site><button type="button" data-s="zn" aria-pressed="true">Zn dopant</button><button type="button" data-s="b" aria-pressed="false">B dopant</button><button type="button" data-s="c" aria-pressed="false">Undoped C</button></div>
+        <div class="seg" role="group" aria-label="Binding site" data-site><button type="button" data-s="zn" aria-pressed="true">Zn dopant</button><button type="button" data-s="b" aria-pressed="false">B dopant</button><button type="button" data-s="zb" aria-pressed="false">Zn–B pair</button><button type="button" data-s="c" aria-pressed="false">Undoped C</button></div>
         <button class="mini" type="button" data-rerun>Re-run docking</button>
         <span class="sp"></span><span data-dist></span>
       </div>
       <p class="cap" data-mv="3d"><b>Live figure.</b> Ribavirin (C<sub>8</sub>H<sub>12</sub>N<sub>4</sub>O<sub>5</sub>) beside a B/Zn-co-doped γ-graphyne nanotube: one of the input geometries of my QuantumATK study (173 atoms), drawn from the actual coordinates. Drag to rotate.</p>
-      <p class="cap" data-mv="dens" hidden><b>Live figure, illustrative.</b> Electron density of the same structure, shown as a superposition of free-atom densities projected along the viewing direction (not a self-consistent DFT density). Pick a binding site: Ribavirin moves around the tube as a rigid body and docks through its O atom at a typical distance (Zn–O 2.0 Å, B–O 1.6 Å, van der Waals contact 3.0 Å for undoped carbon), and the overlapping density between drug and tube appears. DFT adsorption energies, charge transfer and the self-consistent densities are in preparation.</p>
+      <p class="cap" data-mv="dens" hidden><b>Live figure, illustrative.</b> The atoms are my QuantumATK structure (ball-and-stick); the translucent surface is an iso-density surface of the superposed free-atom valence densities (not a self-consistent DFT density). Drag to rotate. Pick a site: Ribavirin moves around the tube as a rigid body and docks through its O atom at a typical distance (Zn–O 2.0 Å, B–O 1.6 Å, bridging the Zn–B pair, or 3.0 Å van der Waals contact on undoped carbon). Where the drug bonds, its density surface merges with the tube&#8217;s; at the undoped site a gap remains. DFT adsorption energies, charge transfer and the self-consistent densities are in preparation.</p>
     </div>
     <div class="cols">
       <div><h5>Problem</h5><p>Carbon nanocarriers could deliver antivirals such as Ribavirin and Favipiravir, but pristine carbon binds them weakly. Dopants change the local chemistry.</p></div>
@@ -637,9 +638,9 @@
   /* ---- site settings: paste a public link to your CV PDF here ---- */
   window.SITE = { cv: "cv/Shaswat_Pathak_CV.pdf" };
 </script>
-<script src="assets/site.js?v=46" defer></script>
-<script src="assets/mol-data.js?v=46" defer></script>
-<script src="assets/debye-data.js?v=46" defer></script>
-<script src="assets/viz.js?v=46" defer></script>
+<script src="assets/site.js?v=49" defer></script>
+<script src="assets/mol-data.js?v=49" defer></script>
+<script src="assets/debye-data.js?v=49" defer></script>
+<script src="assets/viz.js?v=49" defer></script>
 </body>
 </html>

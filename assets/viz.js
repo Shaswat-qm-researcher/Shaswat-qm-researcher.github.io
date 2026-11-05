@@ -1105,12 +1105,15 @@
       var sc = dphi * 4 + Math.abs(s.z - sZn.z) * 0.3 - s.r * 0.2; if (sc < bs) { bs = sc; best = k; }
     });
     var sC = site(best);
+    var mid = [(P0[zn][0] + P0[bo][0]) / 2, (P0[zn][1] + P0[bo][1]) / 2, (P0[zn][2] + P0[bo][2]) / 2];
+    var sZB = { k: -1, pt: mid, r: Math.hypot(mid[0], mid[1]), phi: Math.atan2(mid[1], mid[0]), z: mid[2] };
     // anchor: the drug atom that faces the Zn site in the input geometry (an O)
     var anc = drug[0], ad = 1e9; drug.forEach(function (k) { var p = P0[k], q = P0[zn], d = Math.hypot(p[0] - q[0], p[1] - q[1], p[2] - q[2]); if (d < ad) { ad = d; anc = k; } });
     var AEL = M.el[anc];
     var SITES = {
       zn: { s: sZn, d: AEL === 'N' ? 2.1 : 2.0, name: 'Zn', label: 'Zn dopant', kind: 'bond' },
       b: { s: sB, d: AEL === 'N' ? 1.6 : 1.6, name: 'B', label: 'B dopant', kind: 'bond' },
+      zb: { s: sZB, d: 1.55, name: 'Zn–B', label: 'Zn–B pair', kind: 'bond' },
       c: { s: sC, d: 3.0, name: 'C', label: 'undoped C', kind: 'vdW' }
     };
     // --- animation state: phi, z, r of the target site, docking distance and lift
@@ -1178,7 +1181,7 @@
       c.save(); roundRect(c, ox, oy, pw, ph, 10); c.clip(); c.imageSmoothingEnabled = true; c.drawImage(off, ox, oy, pw, ph);
       var ex = Math.cos(cur.phi), ey = Math.sin(cur.phi), SX = function (p) { return ox + (p[2] - U0) * sc; }, SY = function (p) { return oy + (V1 - (p[0] * ex + p[1] * ey)) * sc; };
       // site and anchor markers with the separation
-      var S = SITES[key], sp = P0[S.s.k], ap = D[anc], dist = Math.hypot(ap[0] - sp[0], ap[1] - sp[1], ap[2] - sp[2]);
+      var S = SITES[key], sp = S.s.pt || P0[S.s.k], ap = D[anc], dist = Math.hypot(ap[0] - sp[0], ap[1] - sp[1], ap[2] - sp[2]);
       c.setLineDash([4, 4]); c.strokeStyle = 'rgba(255,255,255,0.75)'; c.lineWidth = 1.3; c.beginPath(); c.moveTo(SX(sp), SY(sp)); c.lineTo(SX(ap), SY(ap)); c.stroke(); c.setLineDash([]);
       [[sp, '#7fd3ff'], [ap, '#ff8a7a']].forEach(function (m) { c.beginPath(); c.arc(SX(m[0]), SY(m[0]), 4.2, 0, TAU); c.fillStyle = m[1]; c.fill(); c.strokeStyle = '#000'; c.lineWidth = 1; c.stroke(); });
       var lab = function (s, x, y, col, al) { c.font = '600 12px Inter, sans-serif'; var tw = c.measureText(s).width, x0 = al === 'right' ? x - tw : al === 'center' ? x - tw / 2 : x; c.fillStyle = 'rgba(0,0,0,0.55)'; roundRect(c, x0 - 5, y - 13, tw + 10, 18, 5); c.fill(); text(c, s, x, y, col, '600 12px Inter, sans-serif', al || 'left'); };
@@ -1209,6 +1212,7 @@
   }
 
   /* view switch for the nanotube card: 3D model <-> electron density */
+  var d3 = null;
   function molViews() {
     var seg = document.querySelector('[data-mview]'); if (!seg) return;
     var root = seg.closest('.viz');
@@ -1217,6 +1221,21 @@
         var v = b.getAttribute('data-v');
         seg.querySelectorAll('button').forEach(function (q) { q.setAttribute('aria-pressed', String(q === b)); });
         root.querySelectorAll('[data-mv]').forEach(function (el) { el.hidden = el.getAttribute('data-mv') !== v; });
+        if (v === 'dens' && !d3) {
+          d3 = 'loading';
+          var host = root.querySelector('#viz-dens3d'), me = document.querySelector('script[src*="viz.js"]');
+          var url = me ? me.src.replace(/viz\.js(\?.*)?$/, 'dens3d.js$1') : 'assets/dens3d.js';
+          host.classList.add('loading');
+          import(url).then(function (m) { return m.init(host, { seg: root.querySelector('[data-site]'), rerun: root.querySelector('[data-rerun]'), dist: root.querySelector('[data-dist]') }); })
+            .then(function () { d3 = 'ok'; host.classList.remove('loading'); })
+            .catch(function (err) {                         // no WebGL / offline: use the 2D map
+              if (window.console) console.warn('3D density view unavailable, using 2D', err);
+              d3 = 'failed'; host.hidden = true; host.setAttribute('data-mv', 'none');
+              var c2 = root.querySelector('#viz-dens'); c2.setAttribute('data-mv', 'dens'); c2.hidden = false;
+              widgets.forEach(function (w) { if (w.el === c2) { w.draw(); } });
+              kick();
+            });
+        }
         widgets.forEach(function (w) { if (w.el.id === 'viz-mol' || w.el.id === 'viz-dens') { w.resize && w.resize(); w.draw(); } });
         kick();
       });
