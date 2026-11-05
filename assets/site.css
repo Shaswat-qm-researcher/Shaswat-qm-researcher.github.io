@@ -550,3 +550,12 @@ footer { align-items: center; }
 .d3lab.site { color: var(--accent); }
 .d3lab.drug { color: var(--warm); }
 .d3lab.read { transform: none !important; left: 12px; top: 12px; margin: 0; font: 500 12px var(--mono); color: var(--ink); opacity: 1 !important; }
+
+.d3leg { position: absolute; left: 12px; bottom: 10px; display: flex; flex-direction: column; gap: 4px; pointer-events: none;
+  padding: 6px 10px; border-radius: 8px; background: color-mix(in srgb, var(--surface) 88%, transparent); border: 1px solid var(--line-2); font: 500 11.5px var(--mono); color: var(--ink-2); }
+.d3leg div { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; }
+.d3leg span { display: inline-flex; align-items: center; gap: 5px; }
+.d3leg i { width: 10px; height: 10px; border-radius: 50%; display: inline-block; border: 1px solid rgba(0,0,0,.25); }
+.d3leg i.sq { border-radius: 3px; }
+.d3leg b { font-weight: 600; color: var(--ink); margin-right: 2px; }
+.d3leg small { color: var(--faint); }

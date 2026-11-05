@@ -1073,7 +1073,7 @@
      density. The nanotube is fixed; Ribavirin (a separate 29-atom molecule) is moved as a
      rigid body around the tube axis to the chosen site and docked with a typical bond
      length. The view always shows the chosen site in profile, at the top of the tube. */
-  var DW = { H: 1, B: 3, C: 4, N: 5, O: 6, Zn: 12 };            // valence-electron weights
+  var DW = { H: 1, B: 3, C: 4, N: 5, O: 6, Zn: 2 };            // valence-electron weights
   var DS = { H: 0.36, B: 0.6, C: 0.55, N: 0.52, O: 0.5, Zn: 0.75 }; // Gaussian widths (A)
   var INFERNO = ['#000004', '#1b0c41', '#4a0c6b', '#781c6d', '#a52c60', '#cf4446', '#ed6925', '#fb9b06', '#f7d13d', '#fcffa4'];
   function inferno(u) {
@@ -1111,8 +1111,8 @@
     var anc = drug[0], ad = 1e9; drug.forEach(function (k) { var p = P0[k], q = P0[zn], d = Math.hypot(p[0] - q[0], p[1] - q[1], p[2] - q[2]); if (d < ad) { ad = d; anc = k; } });
     var AEL = M.el[anc];
     var SITES = {
-      zn: { s: sZn, d: AEL === 'N' ? 2.1 : 2.0, name: 'Zn', label: 'Zn dopant', kind: 'bond' },
-      b: { s: sB, d: AEL === 'N' ? 1.6 : 1.6, name: 'B', label: 'B dopant', kind: 'bond' },
+      zn: { s: sZn, d: 3.0, name: 'Zn', label: 'Zn dopant', kind: 'vdW' },
+      b: { s: sB, d: 3.0, name: 'B', label: 'B dopant', kind: 'vdW' },
       zb: { s: sZB, d: 1.55, name: 'Zn–B', label: 'Zn–B pair', kind: 'bond' },
       c: { s: sC, d: 3.0, name: 'C', label: 'undoped C', kind: 'vdW' }
     };

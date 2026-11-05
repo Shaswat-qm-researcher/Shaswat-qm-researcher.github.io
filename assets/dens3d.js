@@ -57,15 +57,15 @@ export async function init(host, ui) {
   for (const k of drug) { const p = P0[k], q = P0[zn], d = Math.hypot(p[0] - q[0], p[1] - q[1], p[2] - q[2]); if (d < ad) { ad = d; anc = k; } }
   const AEL = M.el[anc];
   const SITES = {
-    zn: { s: sZn, d: 2.0, label: 'Zn dopant', partners: [[zn, 'Zn']], kind: 'typical Zn–O bond length' },
-    b: { s: sB, d: 1.6, label: 'B dopant', partners: [[bo, 'B']], kind: 'typical B–O bond length' },
-    zb: { s: sZB, d: 0, label: 'Zn–B pair', partners: [[zn, 'Zn'], [bo, 'B']], kind: 'O bridging the Zn–B pair' },
-    c: { s: sC, d: 3.0, label: 'undoped C', partners: [[best, 'C']], kind: 'van der Waals contact' }
+    zn: { s: sZn, d: 3.0, label: 'Zn dopant', partners: [[zn, 'Zn']], kind: 'no bond: van der Waals contact' },
+    b: { s: sB, d: 3.0, label: 'B dopant', partners: [[bo, 'B']], kind: 'no bond: van der Waals contact' },
+    zb: { s: sZB, d: 0, label: 'Zn–B pair', partners: [[zn, 'Zn'], [bo, 'B']], kind: 'bond: O bridging the Zn–B pair' },
+    c: { s: sC, d: 3.0, label: 'undoped C', partners: [[best, 'C']], kind: 'no bond: van der Waals contact' }
   };
 
   /* ---------------- docking state ---------------- */
-  const cur = { phi: sZn.phi, z: sZn.z, r: sZn.r, d: 2.0, lift: 6 };
-  let key = 'zn', tl = null;
+  const cur = { phi: sZB.phi, z: sZB.z, r: sZB.r, d: 0, lift: 6 };
+  let key = 'zb', tl = null;
   const wrap = a => Math.atan2(Math.sin(a), Math.cos(a));
   const ease = u => (u < 0.5 ? 4 * u * u * u : 1 - Math.pow(-2 * u + 2, 3) / 2);
   function rigid() {   // rotation about the tube axis (dphi) and translation, in the P0 frame
@@ -85,9 +85,9 @@ export async function init(host, ui) {
   renderer.domElement.style.display = 'block'; renderer.domElement.style.width = '100%'; renderer.domElement.style.touchAction = 'pan-y';
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(32, 2, 1, 400);
-  camera.position.set(4, 15, 46); camera.lookAt(0, 5.5, 0);
+  camera.position.set(4, 17, 46); camera.lookAt(0, 7, 0);
   const controls = new OrbitControls(camera, renderer.domElement);
-  controls.target.set(0, 5.5, 0); controls.enableZoom = false; controls.enablePan = false; controls.rotateSpeed = 0.7;
+  controls.target.set(0, 7, 0); controls.enableZoom = false; controls.enablePan = false; controls.rotateSpeed = 0.7;
   scene.add(new THREE.HemisphereLight(0xffffff, 0x445566, 1.6));
   const sun = new THREE.DirectionalLight(0xffffff, 1.8); sun.position.set(12, 30, 25); scene.add(sun);
 
@@ -118,10 +118,14 @@ export async function init(host, ui) {
   function poseDrug(g) { drugG.rotation.set(g.dphi, 0, 0); drugG.position.set(g.dz + g.T[2], g.T[0], g.T[1]); }
 
   /* ---------------- density field + iso-surface ---------------- */
-  const N = 84, HALF = 16, vox = 2 * HALF / N, DW = { H: 1, B: 3, C: 4, N: 5, O: 6, Zn: 12 }, DSg = { H: 0.36, B: 0.6, C: 0.55, N: 0.52, O: 0.5, Zn: 0.75 };
-  const isoMat = new THREE.MeshStandardMaterial({ transparent: true, opacity: 0.32, roughness: 0.25, metalness: 0, side: THREE.DoubleSide, depthWrite: false });
-  const mc = new MarchingCubes(N, isoMat, false, false, 120000);
-  mc.scale.set(HALF, HALF, HALF); mc.isolation = 0.25; root.add(mc);
+  const N = 76, HALF = 16, vox = 2 * HALF / N, DW = { H: 1, B: 3, C: 4, N: 5, O: 6, Zn: 2 },   /* valence electrons (Zn: 4s only) */ DSg = { H: 0.36, B: 0.6, C: 0.55, N: 0.52, O: 0.5, Zn: 0.75 };
+  // magma colour map: outer (low density) purple -> inner (high density) pale yellow
+  const LEVELS = [[0.1, '#721f81', 0.22], [0.4, '#f1605d', 0.26], [1.4, '#fcfdbf', 0.42]];
+  const surfs = LEVELS.map(([iso, col, op]) => {
+    const mat = new THREE.MeshStandardMaterial({ color: col, emissive: col, emissiveIntensity: 0.25, transparent: true, opacity: op, roughness: 0.3, metalness: 0, side: THREE.DoubleSide, depthWrite: false });
+    const m = new MarchingCubes(N, mat, false, false, 120000); m.scale.set(HALF, HALF, HALF); m.isolation = iso; m.renderOrder = 2; root.add(m); return m;
+  });
+  const mc = surfs[0];
   const tubeF = new Float32Array(N * N * N);
   function splat(F, v, e) {        // v in model coords
     const s = DSg[e], A = DW[e] / (Math.pow(2 * Math.PI, 1.5) * s * s * s), inv = 1 / (2 * s * s), R = Math.ceil(3 * s / vox);
@@ -138,13 +142,19 @@ export async function init(host, ui) {
   function updateField(g) {
     mc.field.set(tubeF);
     for (const k of drug) splat(mc.field, mp(placed(k, g)), M.el[k]);
-    mc.update();
+    surfs.forEach((m, i) => { if (i) m.field.set(mc.field); m.update(); });
   }
 
   /* ---------------- labels ---------------- */
   host.style.position = 'relative';
   const mk = cls => { const d = document.createElement('span'); d.className = 'd3lab ' + cls; host.appendChild(d); return d; };
-  const labSite = mk('site'), labDrug = mk('drug'), labRead = mk('read');
+  const labDrug = mk('drug'), labRead = mk('read');
+  const leg = document.createElement('div'); leg.className = 'd3leg'; host.appendChild(leg);
+  function buildLegend() {
+    const atoms = ['C', 'H', 'N', 'O', 'B', 'Zn'].map(e => `<span><i style="background:#${colFor(e).getHexString()}"></i>${e}</span>`).join('');
+    const dens = LEVELS.map(([iso, col]) => `<span><i class="sq" style="background:${col}"></i>${iso}</span>`).join('');
+    leg.innerHTML = `<div>${atoms}</div><div><b>density</b>${dens}<small>e/Å³</small></div>`;
+  }
   labDrug.textContent = 'Ribavirin';
   const tmp = new THREE.Vector3();
   function place(el, v) {
@@ -157,9 +167,10 @@ export async function init(host, ui) {
   /* ---------------- theme ---------------- */
   function theme() {
     const dk = document.documentElement.getAttribute('data-theme') === 'dark' || (!document.documentElement.getAttribute('data-theme') && matchMedia('(prefers-color-scheme: dark)').matches);
-    isoMat.color.set(dk ? '#8ebae6' : '#7fb0de'); isoMat.opacity = dk ? 0.32 : 0.3;
+    surfs.forEach((m, i) => { m.material.opacity = LEVELS[i][2] * (dk ? 1 : 1.1); });
     bondMat.color.set(document.documentElement.getAttribute('data-theme') === 'dark' || (!document.documentElement.getAttribute('data-theme') && matchMedia('(prefers-color-scheme: dark)').matches) ? 0x8a929c : 0x9aa0a8);
     [[tube, tubeA], [drug, drugA]].forEach(([idx, A]) => { idx.forEach((k, i) => A.setColorAt(i, colFor(M.el[k]))); A.instanceColor.needsUpdate = true; });
+    buildLegend();
     request();
   }
   document.addEventListener('themechange', theme);
@@ -178,8 +189,6 @@ export async function init(host, ui) {
     renderer.render(scene, camera);
     // labels + readout
     const S = SITES[key], ap = placed(anc, g);
-    place(labSite, mp(S.partners.length > 1 ? S.s.pt : P0[S.partners[0][0]]).add(new THREE.Vector3(0, -1.6, 0)));
-    labSite.textContent = S.label;
     let top = null; for (const k of drug) { const v = mp(placed(k, g)); if (!top || v.y > top.y) top = v; }
     place(labDrug, top.clone().add(new THREE.Vector3(0, 1.2, 0)));
     const parts = S.partners.map(([k, nm]) => { const q = P0[k]; return nm + '···' + AEL + ' ' + Math.hypot(ap[0] - q[0], ap[1] - q[1], ap[2] - q[2]).toFixed(1) + ' Å'; });
@@ -212,13 +221,13 @@ export async function init(host, ui) {
   function resize() {
     const w = Math.max(240, host.clientWidth), h = Math.round(w < 560 ? 360 : Math.min(500, Math.max(360, w * 0.52)));
     renderer.setSize(w, h, true); camera.aspect = w / h;
-    camera.position.setLength(w < 560 ? 62 : 48); camera.updateProjectionMatrix(); request();
+    camera.position.copy(controls.target).add(new THREE.Vector3(4, 10, 46).setLength(w < 560 ? 66 : 54)); camera.lookAt(controls.target); camera.updateProjectionMatrix(); request();
   }
   new ResizeObserver(resize).observe(host); resize();
   let started = false;
   new IntersectionObserver(es => es.forEach(e => {
     visible = e.isIntersecting;
-    if (visible && !started) { started = true; go('zn', true); }
+    if (visible && !started) { started = true; go('zb', true); }
     if (visible) request();
   })).observe(host);
   theme();
