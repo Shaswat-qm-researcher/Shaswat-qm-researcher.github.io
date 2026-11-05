@@ -571,3 +571,13 @@ footer { align-items: center; }
 .d3leg { top: auto; bottom: 12px; right: 12px; }
 .d3leg { top: 12px; bottom: auto; right: 12px; }
 @media (max-width: 560px) { .d3leg { top: auto; bottom: 8px; left: 8px; right: auto; } }
+
+/* PhD-search banner: soft red so it stands out */
+.seek { background: #fbe3e1; border: 1px solid #f1c3be; }
+.seek svg { stroke: #c0392b; }
+[data-theme="dark"] .seek { background: #3a2224; border-color: #5c3135; }
+[data-theme="dark"] .seek svg { stroke: #f08a7e; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .seek { background: #3a2224; border-color: #5c3135; }
+  :root:not([data-theme="light"]) .seek svg { stroke: #f08a7e; }
+}
