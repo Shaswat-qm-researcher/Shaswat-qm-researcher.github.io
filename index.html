@@ -32,7 +32,7 @@
   /* Freshness check: GitHub Pages lets browsers reuse a page for 10 minutes. version.txt is
      fetched uncached; if it differs from this page's build, reload once from the network. */
   (function () {
-    var BUILD = '2026-11-05-22';
+    var BUILD = '2026-11-05-23';
     try {
       fetch('version.txt?t=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.ok ? r.text() : ''; }).then(function (v) {
         v = (v || '').trim(); if (!v || v === BUILD) return;
@@ -557,7 +557,7 @@
   </div>
   <div class="tools rv" aria-label="First-principles codes"><span class="grp">First principles</span><div><span>Quantum ESPRESSO</span><span>VASP</span><span>QuantumATK</span><span>Gaussian</span><span>phonopy · phono3py</span><span>thermo_pw</span><span>VESTA</span><span>BURAI</span></div></div>
   <div class="tools rv" aria-label="Electrodynamics"><span class="grp">Electrodynamics</span><div><span>MNPBEM (boundary elements)</span><span>Mie theory</span><span>hydrodynamic Drude model</span></div></div>
-  <div class="tools rv" aria-label="Machine learning"><span class="grp">Learning</span><div><span>SISSO</span><span>PySR</span><span>PINNs</span><span>TensorFlow</span><span>Optuna</span><span>PCA · PLS</span></div></div>
+  <div class="tools rv" aria-label="Machine learning"><span class="grp">Learning</span><div><span>SISSO</span><span>PySR</span><span>PINNs</span><span>DNN · MLP</span><span>Random forest</span><span>SVR</span><span>Gaussian-process regression</span><span>SHAP</span><span>PCA · PLS</span><span>Critical-regime analysis</span><span>Particle-swarm optimisation</span><span>TensorFlow</span><span>Optuna</span></div></div>
   <div class="tools rv" aria-label="Numerics"><span class="grp">Numerics</span><div><span>Python · NumPy · SciPy</span><span>MATLAB</span><span>MPI</span><span>finite differences</span><span>Monte Carlo</span><span>ANSYS Fluent / Icepak</span><span>LaTeX</span></div></div>
 </section>
 
