@@ -119,8 +119,11 @@ export async function init(host, ui) {
 
   /* ---------------- density field + iso-surface ---------------- */
   const N = 76, HALF = 16, vox = 2 * HALF / N, DW = { H: 1, B: 3, C: 4, N: 5, O: 6, Zn: 2 },   /* valence electrons (Zn: 4s only) */ DSg = { H: 0.36, B: 0.6, C: 0.55, N: 0.52, O: 0.5, Zn: 0.75 };
-  // magma colour map: outer (low density) purple -> inner (high density) pale yellow
-  const LEVELS = [[0.1, '#721f81', 0.22], [0.4, '#f1605d', 0.26], [1.4, '#fcfdbf', 0.42]];
+  // inferno colour map (same as the 2D map), log scale from RHO0 to RHO1; each surface takes the colour of its iso-value
+  const INF = ['#000004', '#1b0c41', '#4a0c6b', '#781c6d', '#a52c60', '#cf4446', '#ed6925', '#fb9b06', '#f7d13d', '#fcffa4'];
+  const RHO0 = 0.03, RHO1 = 2.5, tOf = r => (Math.log10(r) - Math.log10(RHO0)) / (Math.log10(RHO1) - Math.log10(RHO0));
+  const inf = t => { t = Math.min(1, Math.max(0, t)) * (INF.length - 1); const i = Math.min(INF.length - 2, Math.floor(t)), f = t - i; return '#' + new THREE.Color(INF[i]).lerp(new THREE.Color(INF[i + 1]), f).getHexString(); };
+  const LEVELS = [[0.1, 0.22], [0.4, 0.26], [1.4, 0.42]].map(([iso, op]) => [iso, inf(tOf(iso)), op]);
   const surfs = LEVELS.map(([iso, col, op]) => {
     const mat = new THREE.MeshStandardMaterial({ color: col, emissive: col, emissiveIntensity: 0.25, transparent: true, opacity: op, roughness: 0.3, metalness: 0, side: THREE.DoubleSide, depthWrite: false });
     const m = new MarchingCubes(N, mat, false, false, 120000); m.scale.set(HALF, HALF, HALF); m.isolation = iso; m.renderOrder = 2; root.add(m); return m;
@@ -152,8 +155,9 @@ export async function init(host, ui) {
   const leg = document.createElement('div'); leg.className = 'd3leg'; host.appendChild(leg);
   function buildLegend() {
     const atoms = ['C', 'H', 'N', 'O', 'B', 'Zn'].map(e => `<span><i style="background:#${colFor(e).getHexString()}"></i>${e}</span>`).join('');
-    const dens = LEVELS.map(([iso, col]) => `<span><i class="sq" style="background:${col}"></i>${iso}</span>`).join('');
-    leg.innerHTML = `<div>${atoms}</div><div><b>density</b>${dens}<small>e/Å³</small></div>`;
+    const grad = 'linear-gradient(90deg,' + INF.join(',') + ')';
+    const ticks = LEVELS.map(([iso]) => `<em style="left:${(tOf(iso) * 100).toFixed(1)}%">${iso}</em>`).join('');
+    leg.innerHTML = `<div>${atoms}</div><div class="cbar-t">electron density (e/Å³, log) · surfaces at</div><div class="cbar" style="background:${grad}">${ticks}</div>`;
   }
   labDrug.textContent = 'Ribavirin';
   const tmp = new THREE.Vector3();
